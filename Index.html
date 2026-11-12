@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tenang BC — Minton</title>
+<style>
+  :root {
+    --g: #0f8a4b; --g-dark: #0a6b3a; --g-soft: #e3f6ea; --bg: #eef6f0; --card: #fff;
+    --ink: #14301f; --mut: #5d7366; --line: #dbe8df; --red: #c62828; --amber: #b45309; --amber-soft: #fff4dd;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 0 12px 40px; }
+  .hero {
+    background: linear-gradient(135deg, var(--g), var(--g-dark)); color: #fff;
+    margin: 0 -12px 12px; padding: 16px; border-radius: 0 0 20px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero .logo { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; background: #0b1f4b; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85); }
+  .hero h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
+  .hero p { margin: 2px 0 0; opacity: .85; font-size: 14px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(20, 48, 31, .05);
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  h3 { margin: 0 0 12px; font-size: 18px; }
+  .mut { color: var(--mut); font-size: 14px; }
+  .small { font-size: 13px; }
+  a { color: var(--g-dark); }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; vertical-align: middle; }
+  .badge.open { background: var(--g-soft); color: var(--g-dark); }
+  .badge.closed { background: #fde4e4; color: var(--red); }
+  .badge.after { background: var(--amber-soft); color: var(--amber); }
+
+  .when { font-size: 18px; font-weight: 700; margin: 6px 0 8px; overflow-wrap: anywhere; }
+  .info { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 15px; }
+  .info dt { color: var(--mut); }
+  .info dd { margin: 0; overflow-wrap: anywhere; }
+  .stats { display: flex; gap: 8px; margin-top: 12px; }
+  .stat { flex: 1; background: var(--g-soft); border-radius: 12px; padding: 10px; text-align: center; font-weight: 700; font-size: 18px; color: var(--g-dark); }
+  .stat small { display: block; font-weight: 400; font-size: 12px; color: var(--mut); }
+
+  .me { border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-weight: 700; }
+  .me.in { background: var(--g); color: #fff; }
+  .me.wait { background: var(--amber-soft); color: var(--amber); border: 1px solid #f3d9a4; }
+
+  label { display: block; font-size: 14px; font-weight: 600; margin: 10px 0 4px; }
+  input[type=text], input[type=tel], input[type=password], input[type=date], input[type=url], textarea {
+    width: 100%; font-size: 16px; font-family: inherit; color: var(--ink);
+    padding: 12px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; min-height: 48px;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 138, 75, .15); }
+  .note { font-size: 12.5px; color: var(--mut); margin: 6px 0 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 50px; padding: 0 16px; width: 100%; border: 0; border-radius: 12px;
+    background: var(--g); color: #fff; font: 700 16px/1 inherit; font-family: inherit;
+    cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { background: var(--g-dark); }
+  .btn.ghost { background: #fff; color: var(--g-dark); border: 1.5px solid var(--line); }
+  .btn.danger { background: var(--red); }
+  .btn.wa { background: #1faa59; }
+  .btn.sm { min-height: 44px; width: auto; padding: 0 12px; font-size: 14px; }
+  .btn.sm.out { background: #fff; color: var(--red); border: 1.5px solid #f0c9c9; }
+  .btns { display: flex; gap: 8px; margin-top: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  body.busy .btn, body.busy input[type=checkbox] { pointer-events: none; opacity: .6; }
+
+  ol.list { list-style: none; margin: 0; padding: 0; }
+  ol.list li { display: flex; align-items: center; gap: 8px; padding: 8px 6px; border-bottom: 1px solid var(--line); min-height: 48px; }
+  ol.list li:last-child { border-bottom: 0; }
+  ol.list li.mine { background: var(--g-soft); border-radius: 10px; border-bottom-color: transparent; }
+  .no { flex: 0 0 26px; text-align: right; color: var(--mut); font-variant-numeric: tabular-nums; }
+  .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .nm small { display: block; }
+  .sub { margin: 14px 0 6px; font-size: 14px; font-weight: 700; color: var(--amber); }
+  .empty { color: var(--mut); padding: 8px 0; }
+
+  .fee { font-size: 20px; font-weight: 800; color: var(--g-dark); }
+  .rules ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .rules li { margin: 2px 0; }
+
+  .iconbtn { flex: 0 0 44px; height: 44px; border: 1.5px solid var(--line); background: #fff; border-radius: 10px; font-size: 18px; cursor: pointer; }
+  .paid { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mut); margin: 0; font-weight: 400; }
+  .paid input { width: 26px; height: 26px; accent-color: var(--g); }
+  .admin { border-color: var(--g); border-width: 2px; }
+  .admhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .admhead h2 { margin: 0; }
+  .sec { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+  .sec h4 { margin: 0 0 8px; font-size: 15px; }
+  .prev { background: var(--g-soft); border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 14px; }
+  .log { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+  .log li { padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  .log li:last-child { border-bottom: 0; }
+
+  footer { text-align: center; padding: 8px 0 0; }
+  .linkbtn { background: none; border: 0; color: var(--mut); font-size: 14px; min-height: 48px; padding: 0 20px; cursor: pointer; font-family: inherit; }
+
+  #sheetBg { position: fixed; inset: 0; background: rgba(10, 30, 18, .5); display: none; align-items: flex-end; z-index: 40; }
+  #sheetBg.on { display: flex; }
+  #sheet {
+    background: #fff; width: 100%; max-width: 520px; margin: 0 auto; border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 90vh; overflow: auto;
+    animation: up .18s ease-out;
+  }
+  @keyframes up { from { transform: translateY(40px); opacity: .5; } to { transform: none; opacity: 1; } }
+  #sheet p { margin: 0 0 8px; }
+  #sheet textarea { min-height: 220px; font-size: 14px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 15px;
+    max-width: calc(100% - 32px); width: max-content; text-align: center; z-index: 60;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%); }
+  #toast.err { background: var(--red); }
+  #bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: #ffd54a; z-index: 70; display: none; animation: pulse 1s infinite; }
+  body.busy #bar { display: block; }
+  @keyframes pulse { 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="wrap">
+  <header class="hero">
+    <img class="logo" alt="" width="56" height="56" src="data:image/jpeg;base64,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">
+    <div>
+      <h1>Tenang BC</h1>
+      <p>Senarai hadir minton</p>
+    </div>
+  </header>
+
+  <div id="load" class="card">Memuatkan…</div>
+
+  <div id="app" hidden>
+    <section class="card" id="sessCard"></section>
+
+    <div id="myStatus"></div>
+
+    <section class="card" id="joinCard" hidden>
+      <h2>Nak main? Daftar di sini</h2>
+      <form id="joinForm" novalidate>
+        <label for="jName">Nama</label>
+        <input type="text" id="jName" maxlength="30" autocomplete="nickname" placeholder="cth. Adib">
+        <label for="jPhone">No. telefon <span class="mut">(pilihan)</span></label>
+        <input type="tel" id="jPhone" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="cth. 0123456789">
+        <p class="note">🔒 Untuk admin sahaja — memudahkan urusan bayaran &amp; makluman. Tidak dipaparkan kepada ahli lain.</p>
+        <div class="btns"><button type="submit" class="btn">Hadir ✅</button></div>
+        <p class="note">Sudah daftar tetapi butang “Tarik diri” tiada? Isi nama &amp; no. telefon yang sama, kemudian tekan Hadir.</p>
+      </form>
+    </section>
+
+    <section class="card" id="closedCard" hidden>
+      <b>Senarai sudah ditutup. Hubungi admin.</b>
+      <div class="btns"><button type="button" class="btn ghost" data-act="reclaim">Saya sudah daftar — tunjuk nama saya</button></div>
+    </section>
+
+    <section class="card" id="listCard"></section>
+
+    <section class="card" id="feeCard"></section>
+
+    <section class="card rules">
+      <h2>Peraturan</h2>
+      <ul>
+        <li>&lt;=7 org = 1 court</li>
+        <li>&lt;=12 org = 2 court</li>
+        <li>&lt;=18 org = 3 court</li>
+        <li>berpandukan kekosongan dewan</li>
+        <li><b>JIKA TIDAK DAPAT HADIR LAST MINUTE, MOHON MAKLUMKAN PADA ADMIN</b></li>
+      </ul>
+    </section>
+
+    <section class="card admin" id="adminPanel" hidden>
+      <div class="admhead">
+        <h2>🛠️ Admin</h2>
+        <button type="button" class="btn sm ghost" data-act="admExit">Keluar</button>
+      </div>
+      <p id="admStatus" style="margin:0 0 10px"></p>
+      <button type="button" class="btn" id="admToggle" data-act="admToggle"></button>
+      <button type="button" class="btn ghost" style="margin-top:8px" data-act="copy">📋 Salin senarai</button>
+      <div class="grid2" style="margin-top:8px">
+        <button type="button" class="btn ghost" data-act="admEditSess">✏️ Edit sesi</button>
+        <button type="button" class="btn ghost" data-act="admNewSess">🆕 Sesi baru</button>
+        <button type="button" class="btn ghost" data-act="admAdd">➕ Tambah pemain</button>
+        <button type="button" class="btn ghost" data-act="admPin">🔑 Tukar PIN</button>
+      </div>
+
+      <div class="sec">
+        <h4>Bayaran</h4>
+        <form id="feeForm" novalidate>
+          <label for="fCourt">Sewa court (RM)</label>
+          <input type="text" id="fCourt" inputmode="decimal" maxlength="8" placeholder="cth. 90">
+          <div class="grid2">
+            <div>
+              <label for="fShut">Bil. shuttle</label>
+              <input type="text" id="fShut" inputmode="numeric" maxlength="2" placeholder="cth. 3">
+            </div>
+            <div>
+              <label for="fPrice">Harga / shuttle (RM)</label>
+              <input type="text" id="fPrice" inputmode="decimal" maxlength="8">
+            </div>
+          </div>
+          <div class="prev" id="feePrev"></div>
+          <div class="btns">
+            <button type="button" class="btn ghost" id="feeCancel" data-act="feeCancel" hidden>Batal</button>
+            <button type="submit" class="btn">Simpan bayaran</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="sec">
+        <h4 id="admPaid"></h4>
+        <ol class="list" id="admList"></ol>
+      </div>
+
+      <div class="sec">
+        <h4>Log tarik diri</h4>
+        <ul class="log" id="admLog"></ul>
+      </div>
+    </section>
+
+    <footer>
+      <button type="button" class="linkbtn" id="adminBtn" data-act="admLogin">🔒 Admin</button>
+    </footer>
+  </div>
+</div>
+
+<div id="sheetBg"><div id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var REFRESH_MS = 20000;
+  var RULES = [
+    '- <=7 org = 1 court',
+    '- <=12 org = 2 court',
+    '- <=18 org = 3 court',
+    '- berpandukan kekosongan dewan',
+    '- *JIKA TIDAK DAPAT HADIR LAST MINUTE, MOHON MAKLUMKAN PADA ADMIN*'
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  // ---------- storan (dengan sandaran jika disekat) ----------
+  var mem = {};
+  function lsGet(k) { try { var v = localStorage.getItem(k); if (v != null) return v; } catch (e) {} return mem[k] || ''; }
+  function lsSet(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return mem['s:' + k] || ''; } }
+  function ssSet(k, v) { mem['s:' + k] = v; try { sessionStorage.setItem(k, v); } catch (e) {} }
+  function ssDel(k) { delete mem['s:' + k]; try { sessionStorage.removeItem(k); } catch (e) {} }
+
+  function newDeviceId() {
+    var a = new Uint8Array(16), s = '', i;
+    try { (window.crypto || window.msCrypto).getRandomValues(a); }
+    catch (e) { for (i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (i = 0; i < 16; i++) s += (a[i] < 16 ? '0' : '') + a[i].toString(16);
+    return s;
+  }
+
+  var deviceId = lsGet('tbc_device');
+  if (!/^[a-f0-9]{32}$/.test(deviceId)) { deviceId = newDeviceId(); lsSet('tbc_device', deviceId); }
+
+  var S = null;            // keadaan terkini dari pelayan
+  var pin = ssGet('tbc_pin');
+  var busy = 0, refreshing = false, sheetOpen = false, feeDirty = false, sheetSubmit = null, toastTimer = 0;
+
+  // ---------- utiliti ----------
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function rm(c) {
+    var f = c % 100;
+    return 'RM' + Math.floor(c / 100) + (f ? '.' + (f < 10 ? '0' : '') + f : '');
+  }
+  function moneyStr(c) { return rm(c).slice(2); }
+  function parseMoney(v) {
+    var s = String(v || '').trim().replace(',', '.');
+    if (s === '') return 0;
+    var m = /^(\d{1,5})(?:\.(\d{1,2}))?$/.exec(s);
+    if (!m) return -1;
+    var f = m[2] || '';
+    while (f.length < 2) f += '0';
+    return parseInt(m[1], 10) * 100 + parseInt(f, 10);
+  }
+  function ceilDiv(a, b) { var r = a % b; return (a - r) / b + (r ? 1 : 0); }
+
+  function toast(msg, isErr) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'on' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ''; }, isErr ? 4500 : 2600);
+  }
+  function setBusy(d) {
+    busy += d;
+    document.body.classList.toggle('busy', busy > 0);
+  }
+
+  // ---------- panggilan pelayan ----------
+  function auth() { return { pin: pin, deviceId: deviceId }; }
+
+  function call(fn, args, onOk) {
+    setBusy(1);
+    var r = google.script.run
+      .withSuccessHandler(function (res) {
+        setBusy(-1);
+        if (!res || !res.ok) { onFail(res); return; }
+        if (res.state) applyState(res.state, true);
+        if (onOk) onOk(res);
+      })
+      .withFailureHandler(function () {
+        setBusy(-1);
+        toast('Tiada sambungan. Sila cuba lagi.', true);
+      });
+    r[fn].apply(r, args);
+  }
+  function adm(fn, args, onOk) { call(fn, [auth()].concat(args || []), onOk); }
+
+  function onFail(res) {
+    var code = res && res.code;
+    if (pin && (code === 'PIN' || code === 'LOCK')) {
+      exitAdmin();
+      if (!$('sheet').querySelector('[name=pin]')) closeSheet();   // kekalkan borang PIN untuk cuba lagi
+    }
+    toast((res && res.error) || 'Ralat. Sila cuba lagi.', true);
+  }
+
+  function blocked() {
+    var a = document.activeElement;
+    var typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox';
+    return typing || sheetOpen || feeDirty || busy > 0;
+  }
+
+  function refresh(auto) {
+    if (refreshing) return;
+    if (auto && (document.hidden || blocked())) return;
+    refreshing = true;
+    var asAdmin = !!pin;
+    var r = google.script.run
+      .withSuccessHandler(function (res) {
+        refreshing = false;
+        if (res && res.ok) {
+          if (auto && blocked()) return;      // pengguna mula menaip semasa menunggu
+          applyState(res.state, false);
+        } else if (asAdmin && res && (res.code === 'PIN' || res.code === 'LOCK')) {
+          exitAdmin();
+          toast(res.error, true);
+          refresh(false);
+        } else if (!S) {
+          loadError((res && res.error) || 'Ralat. Sila cuba lagi.');
+        }
+      })
+      .withFailureHandler(function () {
+        refreshing = false;
+        if (!S) loadError('Tiada sambungan. Sila cuba lagi.');
+      });
+    if (asAdmin) r.adminGetState(auth()); else r.getState(deviceId);
+  }
+
+  function loadError(msg) {
+    $('load').innerHTML = '<p style="margin:0 0 10px">' + esc(msg) + '</p>' +
+      '<button type="button" class="btn" data-act="reload">Cuba lagi</button>';
+  }
+
+  function applyState(st, force) {
+    if (!st) return;
+    if (!!pin !== !!st.admin) return;              // jawapan lama dari mod lain
+    if (!force && S && st.ts < S.ts) return;       // jawapan lama
+    S = st;
+    render();
+  }
+
+  // ---------- paparan ----------
+  function split() {
+    return { main: S.players.slice(0, S.max), wait: S.players.slice(S.max) };
+  }
+
+  function render() {
+    $('load').hidden = true;
+    $('app').hidden = false;
+    var ses = S.session, open = ses.status === 'OPEN', sp = split();
+
+    // sesi
+    var map = /^https:\/\//.test(ses.map)
+      ? ' · <a href="' + esc(ses.map) + '" target="_blank" rel="noopener">📍 Peta</a>' : '';
+    $('sessCard').innerHTML =
+      '<span class="badge ' + (open ? 'open">BUKA' : 'closed">TUTUP') + '</span>' +
+      '<div class="when">' + esc(ses.hari) + ', ' + esc(ses.dateDisplay) + '</div>' +
+      '<dl class="info">' +
+        '<dt>Masa</dt><dd>' + esc(ses.time) + '</dd>' +
+        '<dt>Tempat</dt><dd>' + esc(ses.venue) + map + '</dd>' +
+      '</dl>' +
+      '<div class="stats">' +
+        '<div class="stat">' + S.courts + ' Court</div>' +
+        '<div class="stat">' + sp.main.length + '/' + S.max + ' org' +
+          (sp.wait.length ? '<small>+' + sp.wait.length + ' menunggu</small>' : '') + '</div>' +
+      '</div>';
+
+    // status saya
+    var myIdx = -1;
+    S.players.forEach(function (p, i) { if (p.mine && !p.guest) myIdx = i; });
+    var ms = '';
+    if (myIdx >= 0 && myIdx < S.max) {
+      ms = '<div class="me in">✅ Anda dalam senarai — No. ' + (myIdx + 1) + '</div>';
+    } else if (myIdx >= 0) {
+      ms = '<div class="me wait">⏳ Anda dalam senarai menunggu — No. ' + (myIdx - S.max + 1) + '</div>';
+    }
+    $('myStatus').innerHTML = ms;
+
+    $('joinCard').hidden = S.me.joined || !open;
+    $('closedCard').hidden = S.me.joined || open;
+
+    // senarai
+    var h = '<h2>Senarai pemain</h2>';
+    h += sp.main.length ? '<ol class="list">' + sp.main.map(function (p, i) { return row(p, i + 1); }).join('') + '</ol>'
+                        : '<div class="empty">Belum ada nama. Jadilah yang pertama!</div>';
+    if (sp.wait.length) {
+      h += '<div class="sub">Senarai menunggu</div><ol class="list">' +
+        sp.wait.map(function (p, i) { return row(p, i + 1); }).join('') + '</ol>';
+    }
+    if (S.me.joined && open && S.me.guests < S.maxGuests) {
+      h += '<div class="btns"><button type="button" class="btn ghost" data-act="guest">➕ Bawa tetamu (+1)</button></div>';
+    }
+    $('listCard').innerHTML = h;
+
+    // bayaran
+    var f = S.fee, fh = '<h2>Bayaran</h2>';
+    if (f.per > 0) {
+      fh += '<div class="fee">Bayaran: RM' + f.per + ' / org</div>';
+    } else {
+      fh += '<div class="mut">Belum ditetapkan.</div>';
+    }
+    $('feeCard').innerHTML = fh;
+
+    renderAdmin();
+  }
+
+  function row(p, no) {
+    return '<li' + (p.mine ? ' class="mine"' : '') + '>' +
+      '<span class="no">' + no + '.</span>' +
+      '<span class="nm">' + esc(p.name) + (p.paid ? ' ✅' : '') + '</span>' +
+      (p.mine && p.id ? '<button type="button" class="btn sm out" data-act="wd" data-id="' + esc(p.id) + '">Tarik diri</button>' : '') +
+      '</li>';
+  }
+
+  function breakdown(court, shuttles, price, n) {
+    var total = court + shuttles * price;
+    return 'Court ' + rm(court) + ' + ' + shuttles + ' shuttle × ' + rm(price) + ' = ' + rm(total) +
+      ' ÷ ' + n + ' org (dibundarkan ke atas)';
+  }
+
+  function renderAdmin() {
+    var a = S.admin;
+    $('adminPanel').hidden = !a;
+    $('adminBtn').hidden = !!a;
+    if (!a) {                       // keluar admin: buang no. telefon dari halaman
+      $('admList').innerHTML = '';
+      $('admLog').innerHTML = '';
+      return;
+    }
+    var open = S.session.status === 'OPEN', sp = split();
+
+    $('admStatus').innerHTML = 'Status senarai: <span class="badge ' + (open ? 'open">BUKA' : 'closed">TUTUP') + '</span>';
+    $('admToggle').textContent = open ? 'TUTUP senarai' : 'Buka semula senarai';
+    $('admToggle').className = open ? 'btn danger' : 'btn';
+
+    if (!feeDirty) fillFees();
+    feePreview();
+
+    var paid = 0;
+    sp.main.forEach(function (p) { if (p.paid) paid++; });
+    $('admPaid').textContent = 'Sudah bayar: ' + paid + '/' + sp.main.length;
+
+    $('admList').innerHTML = S.players.length ? S.players.map(function (p, i) {
+      var waiting = i >= S.max;
+      var sub = [];
+      if (waiting) sub.push('menunggu no. ' + (i - S.max + 1));
+      if (p.src === 'admin') sub.push('ditambah admin');
+      var phone = p.phone
+        ? '<a href="https://wa.me/' + esc(p.wa) + '" target="_blank" rel="noopener">' + esc(p.phone) + '</a>' : '';
+      var subHtml = (phone || sub.length)
+        ? '<small class="mut">' + phone + (phone && sub.length ? ' · ' : '') + esc(sub.join(' · ')) + '</small>' : '';
+      return '<li>' +
+        '<span class="no">' + (waiting ? '–' : (i + 1) + '.') + '</span>' +
+        '<span class="nm">' + esc(p.name) + subHtml + '</span>' +
+        '<label class="paid"><input type="checkbox" data-paid="' + esc(p.id) + '"' + (p.paid ? ' checked' : '') + '>bayar</label>' +
+        '<button type="button" class="iconbtn" data-act="admEdit" data-id="' + esc(p.id) + '" aria-label="Edit">✏️</button>' +
+        '<button type="button" class="iconbtn" data-act="admDel" data-id="' + esc(p.id) + '" aria-label="Buang">🗑️</button>' +
+        '</li>';
+    }).join('') : '<li class="empty">Tiada pemain.</li>';
+
+    var drops = a.dropouts.slice().reverse();
+    $('admLog').innerHTML = drops.length ? drops.map(function (d) {
+      return '<li><b>' + esc(d.name) + '</b>' +
+        (d.after ? ' <span class="badge after">Selepas TUTUP</span>' : '') +
+        '<br><span class="mut">' + esc(d.time) + ' · ' + esc(d.how) + '</span></li>';
+    }).join('') : '<li class="mut">Tiada rekod.</li>';
+  }
+
+  function fillFees() {
+    var f = S.fee;
+    $('fCourt').value = f.court ? moneyStr(f.court) : '';
+    $('fShut').value = f.shuttles ? String(f.shuttles) : '';
+    $('fPrice').value = moneyStr(f.price);
+    $('feeCancel').hidden = true;
+  }
+
+  function feePreview() {
+    var court = parseMoney($('fCourt').value), price = parseMoney($('fPrice').value);
+    var st = $('fShut').value.trim(), el = $('feePrev'), n = S.fee.n;
+    if (court < 0 || price < 0 || !/^\d{0,2}$/.test(st)) { el.textContent = '⚠️ Nilai tidak sah.'; return; }
+    var sh = st === '' ? 0 : Number(st), total = court + sh * price;
+    if (total <= 0) { el.textContent = 'Pratonton: belum ada jumlah.'; return; }
+    if (n <= 0) { el.textContent = 'Jumlah ' + rm(total) + ' — belum ada pemain.'; return; }
+    el.innerHTML = '<b>Pratonton: RM' + ceilDiv(total, n * 100) + ' / org</b><br>' +
+      esc(breakdown(court, sh, price, n));
+  }
+
+  // ---------- teks WhatsApp ----------
+  function buildText() {
+    var ses = S.session, sp = split(), L = [];
+    L.push('*Minton*');
+    L.push('Hari: *' + ses.hari + '*');
+    L.push('Tarikh: *' + ses.dateDisplay + '*');
+    L.push('Masa: *' + ses.time + '*');
+    L.push('Tempat: *' + ses.venue + '*');
+    if (ses.map) L.push(ses.map);
+    L.push('Court: ' + S.courts + ' Court');
+    L.push('');
+    sp.main.forEach(function (p, i) { L.push((i + 1) + '. ' + p.name + (p.paid ? ' ✅' : '')); });
+    L.push('');
+    if (sp.wait.length) {
+      L.push('*Senarai menunggu:*');
+      sp.wait.forEach(function (p, i) { L.push((i + 1) + '. ' + p.name + (p.paid ? ' ✅' : '')); });
+      L.push('');
+    }
+    if (ses.status !== 'OPEN') L.push('======TUTUP======');
+    if (S.fee.per > 0) L.push('Bayaran: *RM' + S.fee.per + '/org*');
+    L = L.concat(RULES);
+    if (ses.status === 'OPEN' && S.url) L.push('Daftar / tarik diri di sini: ' + S.url);
+    return L.join('\n');
+  }
+
+  function execCopy(text) {
+    var ta = document.createElement('textarea'), ok = false;
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+    document.body.appendChild(ta);
+    try {
+      ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+    } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function manualCopy(text) {
+    openSheet('<h3>Salin secara manual</h3><p class="mut">Tekan lama pada teks, pilih semua, kemudian salin.</p>' +
+      '<textarea id="manualTa" readonly>' + esc(text) + '</textarea>' +
+      '<div class="btns"><button type="button" class="btn" data-act="close">Tutup</button></div>');
+    var ta = $('manualTa');
+    try { ta.focus(); ta.select(); } catch (e) {}
+  }
+
+  function copyList() {
+    var text = buildText();
+    var fallback = function () {
+      if (execCopy(text)) toast('Senarai disalin ✅'); else manualCopy(text);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { toast('Senarai disalin ✅'); }, fallback);
+        return;
+      }
+    } catch (e) {}
+    fallback();
+  }
+
+  // ---------- helaian bawah (bottom sheet) ----------
+  function openSheet(html) {
+    $('sheet').innerHTML = html;
+    $('sheetBg').classList.add('on');
+    sheetOpen = true;
+    var f = $('sheet').querySelector('input, textarea');
+    if (f) setTimeout(function () { try { f.focus(); } catch (e) {} }, 60);
+  }
+  function closeSheet() {
+    $('sheetBg').classList.remove('on');
+    $('sheet').innerHTML = '';
+    sheetOpen = false;
+    sheetSubmit = null;
+  }
+  function formSheet(title, body, okLabel, onSubmit, danger) {
+    openSheet('<form id="sheetForm" novalidate><h3>' + esc(title) + '</h3>' + body +
+      '<div class="btns"><button type="button" class="btn ghost" data-act="close">Batal</button>' +
+      '<button type="submit" class="btn' + (danger ? ' danger' : '') + '">' + esc(okLabel) + '</button></div></form>');
+    sheetSubmit = onSubmit;
+  }
+  function field(label, name, value, attrs) {
+    return '<label for="f_' + name + '">' + label + '</label>' +
+      '<input id="f_' + name + '" name="' + name + '" value="' + esc(value) + '" ' + (attrs || 'type="text"') + '>';
+  }
+  function val(form, name) { return form.elements[name] ? form.elements[name].value : ''; }
+  function findP(id) {
+    for (var i = 0; i < S.players.length; i++) if (S.players[i].id === id) return S.players[i];
+    return null;
+  }
+  function done(msg) { return function () { closeSheet(); toast(msg); }; }
+
+  function sessionFields(d) {
+    return field('Tarikh', 'date', d.date, 'type="date" required') +
+      field('Masa', 'time', d.time, 'type="text" maxlength="40"') +
+      field('Tempat', 'venue', d.venue, 'type="text" maxlength="60"') +
+      field('Pautan Google Maps', 'map', d.map, 'type="url" maxlength="300" inputmode="url" placeholder="https://…"');
+  }
+  function sessionData(form) {
+    return { date: val(form, 'date'), time: val(form, 'time'), venue: val(form, 'venue'), map: val(form, 'map') };
+  }
+
+  // ---------- tindakan ----------
+  function exitAdmin() {
+    pin = '';
+    ssDel('tbc_pin');
+    feeDirty = false;
+    if (S) { S.admin = null; renderAdmin(); }
+  }
+
+  function doJoin() {
+    var name = $('jName').value.replace(/\s+/g, ' ').trim(), phone = $('jPhone').value.trim();
+    if (!name) { toast('Sila isi nama.', true); $('jName').focus(); return; }
+    playerCall('join', [deviceId, name, phone], 'Nama anda telah didaftarkan ✅', function () {
+      lsSet('tbc_name', name);
+      lsSet('tbc_phone', phone);
+      if (document.activeElement) document.activeElement.blur();
+    });
+  }
+  // Tindakan pemain memulangkan keadaan awam; dalam mod admin, muat semula keadaan admin selepas itu.
+  function playerCall(fn, args, msg, onOk) {
+    setBusy(1);
+    var r = google.script.run
+      .withSuccessHandler(function (res) {
+        setBusy(-1);
+        if (!res || !res.ok) { onFail(res); return; }
+        closeSheet();
+        if (onOk) onOk();
+        toast(res.claimed ? 'Selamat kembali — nama anda sudah dalam senarai ✅' : msg);
+        if (pin) refresh(false); else applyState(res.state, true);
+      })
+      .withFailureHandler(function () { setBusy(-1); toast('Tiada sambungan. Sila cuba lagi.', true); });
+    r[fn].apply(r, args);
+  }
+
+  var ACT = {
+    reload: function () { $('load').textContent = 'Memuatkan…'; refresh(false); },
+    close: closeSheet,
+    copy: copyList,
+
+    guest: function () {
+      formSheet('Bawa tetamu', field('Nama tetamu', 'name', '', 'type="text" maxlength="30" autocomplete="off"') +
+        '<p class="note">Tetamu dikira dalam bilangan court dan bayaran. Maksimum ' + S.maxGuests + ' tetamu.</p>',
+        'Tambah', function (form) {
+          var name = val(form, 'name').trim();
+          if (!name) { toast('Sila isi nama tetamu.', true); return; }
+          playerCall('addGuest', [deviceId, name], 'Tetamu ditambah ✅');
+        });
+    },
+
+    reclaim: function () {
+      formSheet('Saya sudah daftar',
+        '<p class="mut">Isi nama dan no. telefon yang sama seperti semasa daftar.</p>' +
+        field('Nama', 'name', lsGet('tbc_name'), 'type="text" maxlength="30"') +
+        field('No. telefon', 'phone', lsGet('tbc_phone'), 'type="tel" maxlength="20" inputmode="tel"'),
+        'Teruskan', function (form) {
+          var name = val(form, 'name').replace(/\s+/g, ' ').trim(), phone = val(form, 'phone').trim();
+          if (!name || !phone) { toast('Sila isi nama dan no. telefon.', true); return; }
+          playerCall('reclaim', [deviceId, name, phone], '', function () {
+            lsSet('tbc_name', name);
+            lsSet('tbc_phone', phone);
+          });
+        });
+    },
+
+    wd: function (id) {
+      var p = findP(id);
+      if (!p) return;
+      var msg = '<p>Tarik diri <b>' + esc(p.name) + '</b> daripada senarai?</p>';
+      if (!p.guest && S.me.guests > 0) msg += '<p class="mut">Tetamu anda juga akan ditarik diri.</p>';
+      if (S.session.status !== 'OPEN') {
+        msg += '<p class="mut">Senarai sudah TUTUP — ini akan direkodkan sebagai “Selepas TUTUP”, dan anda tidak boleh daftar semula.</p>';
+      }
+      formSheet('Tarik diri', msg, 'Tarik diri', function () {
+        playerCall('withdraw', [deviceId, id], 'Anda telah tarik diri.');
+      }, true);
+    },
+
+    admLogin: function () {
+      formSheet('Admin', field('PIN admin', 'pin', '',
+        'type="password" inputmode="numeric" maxlength="8" autocomplete="off"'), 'Masuk', function (form) {
+        var p = val(form, 'pin').trim();
+        if (!/^\d{4,8}$/.test(p)) { toast('PIN mesti 4–8 digit.', true); return; }
+        pin = p;                       // disahkan di pelayan; dibuang jika salah
+        ssSet('tbc_pin', p);
+        adm('adminGetState', [], done('Mod admin dibuka 🔓'));
+      });
+    },
+    admExit: function () { exitAdmin(); toast('Keluar dari mod admin.'); refresh(false); },
+
+    admToggle: function () {
+      var open = S.session.status === 'OPEN';
+      formSheet(open ? 'TUTUP senarai?' : 'Buka semula senarai?',
+        '<p>' + (open ? 'Ahli tidak boleh daftar lagi. Tarik diri masih dibenarkan tetapi ditanda “Selepas TUTUP”.'
+                      : 'Ahli boleh daftar semula.') + '</p>',
+        open ? 'TUTUP' : 'Buka', function () {
+          adm('adminSetStatus', [open ? 'CLOSED' : 'OPEN'], done(open ? 'Senarai ditutup.' : 'Senarai dibuka.'));
+        }, open);
+    },
+
+    admEditSess: function () {
+      formSheet('Edit sesi', sessionFields(S.session), 'Simpan', function (form) {
+        adm('adminSaveSession', [sessionData(form)], done('Sesi dikemas kini ✅'));
+      });
+    },
+    admNewSess: function () {
+      formSheet('Sesi baru', sessionFields(S.admin.defaults) +
+        '<p class="note">Senarai baru bermula kosong. Sesi sekarang disimpan sebagai arkib dalam Sheet.</p>',
+        'Cipta sesi', function (form) {
+          adm('adminNewSession', [sessionData(form)], function () {
+            feeDirty = false; fillFees(); feePreview();
+            closeSheet(); toast('Sesi baru dicipta ✅');
+          });
+        });
+    },
+
+    admAdd: function () {
+      formSheet('Tambah pemain', field('Nama', 'name', '', 'type="text" maxlength="30" autocomplete="off"') +
+        field('No. telefon (pilihan)', 'phone', '', 'type="tel" maxlength="20" inputmode="tel" autocomplete="off"'),
+        'Tambah', function (form) {
+          adm('adminAddPlayer', [val(form, 'name'), val(form, 'phone')], done('Pemain ditambah ✅'));
+        });
+    },
+    admEdit: function (id) {
+      var p = findP(id);
+      if (!p) return;
+      formSheet('Edit pemain', field('Nama', 'name', p.raw, 'type="text" maxlength="30" autocomplete="off"') +
+        (p.guest ? '' : field('No. telefon (pilihan)', 'phone', p.phone, 'type="tel" maxlength="20" inputmode="tel" autocomplete="off"')),
+        'Simpan', function (form) {
+          adm('adminEditPlayer', [id, val(form, 'name'), val(form, 'phone')], done('Disimpan ✅'));
+        });
+    },
+    admDel: function (id) {
+      var p = findP(id);
+      if (!p) return;
+      formSheet('Buang pemain', '<p>Buang <b>' + esc(p.name) + '</b> daripada senarai?</p>' +
+        (p.guest ? '' : '<p class="mut">Tetamunya (jika ada) juga akan dibuang.</p>'),
+        'Buang', function () {
+          adm('adminRemovePlayer', [id], done('Pemain dibuang.'));
+        }, true);
+    },
+    admPin: function () {
+      var a = 'type="password" inputmode="numeric" maxlength="8" autocomplete="off"';
+      formSheet('Tukar PIN', field('PIN baru (4–8 digit)', 'p1', '', a) + field('Ulang PIN baru', 'p2', '', a),
+        'Simpan', function (form) {
+          var p1 = val(form, 'p1').trim(), p2 = val(form, 'p2').trim();
+          if (!/^\d{4,8}$/.test(p1)) { toast('PIN mesti 4–8 digit.', true); return; }
+          if (p1 !== p2) { toast('PIN tidak sama.', true); return; }
+          adm('adminChangePin', [p1], function () {
+            pin = p1; ssSet('tbc_pin', p1);
+            closeSheet(); toast('PIN ditukar ✅');
+          });
+        });
+    },
+    feeCancel: function () { feeDirty = false; fillFees(); feePreview(); }
+  };
+
+  function saveFees() {
+    if (parseMoney($('fCourt').value) < 0 || parseMoney($('fPrice').value) < 0 || !/^\d{0,2}$/.test($('fShut').value.trim())) {
+      toast('Nilai bayaran tidak sah.', true);
+      return;
+    }
+    var fees = { court: $('fCourt').value, shuttles: $('fShut').value, price: $('fPrice').value };
+    adm('adminSaveFees', [fees], function () {
+      feeDirty = false; fillFees(); feePreview();
+      if (document.activeElement) document.activeElement.blur();
+      toast('Bayaran disimpan ✅');
+    });
+  }
+
+  // ---------- acara ----------
+  document.addEventListener('click', function (e) {
+    if (e.target === $('sheetBg')) { closeSheet(); return; }
+    var t = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!t || busy > 0) return;
+    var fn = ACT[t.getAttribute('data-act')];
+    if (fn) fn(t.getAttribute('data-id'), t);
+  });
+
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (busy > 0) return;
+    if (e.target.id === 'sheetForm') { if (sheetSubmit) sheetSubmit(e.target); }
+    else if (e.target.id === 'joinForm') doJoin();
+    else if (e.target.id === 'feeForm') saveFees();
+  });
+
+  document.addEventListener('change', function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute('data-paid');
+    if (!id) return;
+    var want = e.target.checked;
+    e.target.checked = !want;            // tunggu pengesahan pelayan
+    adm('adminSetPaid', [id, want]);
+  });
+
+  $('feeForm').addEventListener('input', function () {
+    feeDirty = true;
+    $('feeCancel').hidden = false;
+    feePreview();
+  });
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(true); });
+  setInterval(function () { refresh(true); }, REFRESH_MS);
+
+  // ---------- mula ----------
+  $('jName').value = lsGet('tbc_name');
+  $('jPhone').value = lsGet('tbc_phone');
+  refresh(false);
+})();
+</script>
+</body>
+</html>
